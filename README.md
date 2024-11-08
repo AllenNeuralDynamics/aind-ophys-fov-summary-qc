@@ -1,3 +1,3 @@
-# aind-capsule-template
+# aind-ophys-fov-summary-qc
 
-Basic structure of a capsule to be customized as needed.
+Runs registration qc on all planes for QC purposes. Allows users to verify that the max projection and average images from each plane at the session level are of high quality
