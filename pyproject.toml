@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fov-summary"
+description = "Shared tools for accessing and processing ABC Atlas MERSCOPE data."
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Allen Institute for Neural Dynamics"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3"
+]
+readme = "README.md"
+dynamic = ["version"]
+
+dependencies = [
+]
+
+[tool.setuptools.packages.find]
+where = ["code"]
+
+[tool.setuptools_scm]
