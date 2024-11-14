@@ -190,7 +190,7 @@ if __name__ == "__main__":
         evaluations = quality_evaluations
     )
     print("Writing output file")
-    quality_control.write_standard_file()
+    quality_control.write_standard_file(Path("../results"))
 
 
 
