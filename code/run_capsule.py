@@ -1,6 +1,7 @@
 """ Top level run script """
 from pathlib import Path
 from fov_summary.utils import combine_images
+from datetime import datetime as dt
 from aind_data_schema.core.quality_control import (
     QCEvaluation,
     QCMetric,
@@ -11,23 +12,19 @@ from aind_data_schema.core.quality_control import (
 )
 from aind_data_schema_models.modalities import Modality
 import json
+from aind_qcportal_schema.metric_value import (
+    CheckboxMetric,
+    RulebasedMetric
+)
 # Define a configuration for Image name and image format pattern
 # Store the 
 # Get images from each motion correction folder
 # For each plane, sort the images
 # append the images to a list
 # Create the final FOV summary
-{
-    "Registration Summary": {
-        "Average Projection": "*average_projection.png",
-        "Maximum Projection": "*maximum_projection.png",
-    },
-    "Interictal Events": {
 
-    }
-}
-
-
+def evaluate_metrics(d: dict, threshold: float) -> bool:
+    return any(value > threshold for value in d.values())
 
 if __name__ == "__main__":
     input_dir = Path("data/")
@@ -58,7 +55,28 @@ if __name__ == "__main__":
     registration_metric = QCMetric (
         name = "FOV Summary",
         reference = str(registration_image_fp),
-        value = None
+        value = CheckboxMetric(
+            value="Field of view integrity",
+            options=[
+                 "Timeseries shuffled between planes",
+                 "Field of view associated with incorrect area and/or depth",
+                 "Paired plane cross talk: Extreme",
+                 "Paired plane cross-talk: Moderate",
+            ],
+            status=[
+                Status.PASS,
+                Status.FAIL,
+                Status.FAIL,
+                Status.PASS
+            ],
+            status_history=[                                
+                QCStatus(
+                    evaluator='Pending review',
+                    timestamp=dt.now(),
+                    status=Status.PENDING
+                )
+            ]
+        )
     )
     registation_evaluation = QCEvaluation(
         modality=Modality.from_abbreviation("pophys"),
@@ -85,38 +103,27 @@ if __name__ == "__main__":
     combine_images(epilepsy_summary, epilepsy_image_fp, row_labels=row_labels)
     epilepsy_image_fp = Path(*epilepsy_image_fp.parts[2:])
     
-    epilepsy_references = QCMetric (
+    epilepsy_references = QCMetric(
         name = "Interictal Event Images",
         reference = str(epilepsy_image_fp),
-        value=CheckboxMetric(
-            value="Placeholder CheckboxMetric Value",
-            # Possible options for the metric
+        value = CheckboxMetric(
+            value="Field of view integrity",
             options=[
-                'Uncorrected motion present',
-                'Low signal-to-noise ratio',
-                'De-warping Vertical Banding Artifact',
-                'Laser/scanner interference',
-                'No cells in FOV',
-                'Other Issue with FOV Quality'
-                ],
+                 "Interictal events confirmed by manual inspection",
+                 "Interictal events contravened by manual inspection"
+            ],
             status=[
-                Status.FAIL,
                 Status.PASS,
-                Status.PASS,
-                Status.PASS,
-                Status.PASS,
-                Status.PENDING #TODO, what should this be?
-                ],
+                Status.FAIL
+            ],
             status_history=[                                
                 QCStatus(
-                    evaluator='Initial Pending Status',
-                    timestamp=datetime.now(), #TODO: Use same timestamp for all metrics?
-                    # Requires manual annotation
+                    evaluator='Pending review',
+                    timestamp=dt.now(),
                     status=Status.PENDING
                 )
             ]
         ),
-        status_history = []
     )
     epilepsy_ref_evaluation = QCEvaluation(
         modality=Modality.from_abbreviation("pophys"),
@@ -142,7 +149,9 @@ if __name__ == "__main__":
     
     epilepsy_metrics = QCMetric (
         name = "Interictal Metrics",
-        value = epilepsy_metric_summary
+        value = RulebasedMetric(
+            value=epilepsy_metric_summary,
+            rule=evaluate_metrics(epilepsy_metric_summary, 0.5),
     )
     epilepsy_metric_evaluation = QCEvaluation(
         modality=Modality.from_abbreviation("pophys"),
