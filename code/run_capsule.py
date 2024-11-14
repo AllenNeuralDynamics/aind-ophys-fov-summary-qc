@@ -50,7 +50,7 @@ if __name__ == "__main__":
     registration_dir.mkdir(exist_ok=True)
     registration_image_fp = registration_dir / "fov_summary.png"
     combine_images(registration_summary, registration_image_fp, row_labels=row_labels)
-    registration_image_fp = Path(*registration_image_fp.parts[1:])
+    registration_image_fp = Path(*registration_image_fp.parts[2:])
 
     registration_metric = QCMetric (
         name = "FOV Summary",
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     epilepsy_dir.mkdir(exist_ok=True)
     epilepsy_image_fp = epilepsy_dir / "epilepsy.png"
     combine_images(epilepsy_summary, epilepsy_image_fp, row_labels=row_labels)
-    epilepsy_image_fp = Path(*epilepsy_image_fp.parts[1:])
+    epilepsy_image_fp = Path(*epilepsy_image_fp.parts[2:])
     
     epilepsy_references = QCMetric (
         name = "Interictal Event Images",
