@@ -4,7 +4,8 @@ from fov_summary.utils import combine_images
 from aind_data_schema.core.quality_control import (
     QCEvaluation,
     QCMetric,
-    Stage
+    Stage,
+    QualityControl
 )
 from aind_data_schema_models.modalities import Modality
 import json
@@ -122,3 +123,19 @@ if __name__ == "__main__":
     )
     with open(epilepsy_dir / "quality_evaluation.json", "w") as f:
         json.dump(epilepsy_metric_evaluation.model_dump(), f, indent=4)
+
+    quality_evaluation_fp = input_dir.rglob("quality_evaluation.json")
+    quality_evaluations = []
+    for qual_eval in quality_evaluation_fp:
+        with open(qual_eval) as j:
+            evaluation = json.load(j)
+        quality_evaluations.append(QCEvaluation(**evaluation))
+    
+    quality_control = QualityControl(
+        evaluations = quality_evaluations
+    )
+    quality_control.write_standard_file()
+
+
+
+
