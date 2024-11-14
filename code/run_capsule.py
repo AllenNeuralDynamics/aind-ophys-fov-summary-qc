@@ -39,6 +39,7 @@ if __name__ == "__main__":
     row_labels = []
     average_projection = "average_projection.png"
     maximum_projection = "maximum_projection.png"
+    
     for plane in plane_dirs:
         avg_proj_fp = [i for i in plane.glob("*/motion_correction/*") if average_projection in str(i)][0]
         max_proj_fp = [i for i in plane.glob("motion_correction/*") if maximum_projection in str(i)][0]
