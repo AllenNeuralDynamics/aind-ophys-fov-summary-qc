@@ -27,8 +27,8 @@ def evaluate_metrics(d: dict, threshold: float) -> bool:
     return any(value > threshold for value in d.values())
 
 if __name__ == "__main__":
-    input_dir = Path("data/")
-    output_dir = Path("results/")
+    input_dir = Path("../data/")
+    output_dir = Path("../results/")
     if len(list(input_dir.glob("*"))) == 1:
         input_dir = next(input_dir.glob("*"))
     motion_dirs = [plane for plane in input_dir.rglob("motion_correction")]
@@ -52,32 +52,33 @@ if __name__ == "__main__":
     combine_images(registration_summary, registration_image_fp, row_labels=row_labels)
     registration_image_fp = Path(*registration_image_fp.parts[2:])
 
-    registration_metric = QCMetric (
-        name = "FOV Summary",
+    registration_metric = QCMetric(
+        name = "Field of view summary",
         reference = str(registration_image_fp),
+        status_history = [
+            QCStatus(
+                evaluator = "Pending review",
+                timestamp = dt.now(),
+                status = Status.PENDING
+            )
+        ],
         value = CheckboxMetric(
-            value="Field of view integrity",
-            options=[
-                 "Timeseries shuffled between planes",
-                 "Field of view associated with incorrect area and/or depth",
-                 "Paired plane cross talk: Extreme",
-                 "Paired plane cross-talk: Moderate",
+            value = "Field of view integrity",
+            options = [
+                "Timeseries shuffled between planes",
+                "Field of view associated with incorrect area and/or depth",
+                "Paired plane cross talk: Extreme",
+                "Paired plane cross-talk: Moderate",
             ],
-            status=[
+            status = [
                 Status.PASS,
                 Status.FAIL,
                 Status.FAIL,
                 Status.PASS
             ],
-            status_history=[                                
-                QCStatus(
-                    evaluator='Pending review',
-                    timestamp=dt.now(),
-                    status=Status.PENDING
-                )
-            ]
-        )
+        ),
     )
+
     registation_evaluation = QCEvaluation(
         modality=Modality.from_abbreviation("pophys"),
         stage = Stage.PROCESSING,
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         allow_failed_metrics = False
     )
     with open(registration_dir / "quality_evaluation.json", "w") as f:
-        json.dump(registation_evaluation.model_dump(), f, indent=4)
+        json.dump(json.loads(registation_evaluation.model_dump_json()), f, indent=4)
     ############### INTERICTAL REF SUMMARY ###############
 
     event_pattern = "registered_epilepsy_probability.png"
@@ -104,26 +105,27 @@ if __name__ == "__main__":
     epilepsy_image_fp = Path(*epilepsy_image_fp.parts[2:])
     
     epilepsy_references = QCMetric(
-        name = "Interictal Event Images",
-        reference = str(epilepsy_image_fp),
+       name = "Interictal Event Images",
+       reference = str(epilepsy_image_fp),
+       status_history=[                                
+            QCStatus(
+                evaluator='Pending review',
+                timestamp=dt.now(),
+                status=Status.PENDING
+            )
+        ],
         value = CheckboxMetric(
-            value="Field of view integrity",
-            options=[
-                 "Interictal events confirmed by manual inspection",
-                 "Interictal events contravened by manual inspection"
+            value = "Field of view integrity",
+            options = [
+                "Interictal events confirmed by manual inspection",
+                "Interictal events contravened by manual inspection"
             ],
-            status=[
+            status = [
                 Status.PASS,
                 Status.FAIL
-            ],
-            status_history=[                                
-                QCStatus(
-                    evaluator='Pending review',
-                    timestamp=dt.now(),
-                    status=Status.PENDING
-                )
             ]
-        ),
+        )
+
     )
     epilepsy_ref_evaluation = QCEvaluation(
         modality=Modality.from_abbreviation("pophys"),
@@ -133,7 +135,7 @@ if __name__ == "__main__":
         allow_failed_metrics = False
     )
     with open(epilepsy_dir / "quality_evaluation.json", "w") as f:
-        json.dump(epilepsy_ref_evaluation.model_dump(), f, indent=4)
+        json.dump(json.loads(epilepsy_ref_evaluation.model_dump_json()), f, indent=4)
     ############### INTERICTAL METRIC SUMMARY ###############
 
     event_pattern = "registered_metrics.json"
@@ -147,21 +149,31 @@ if __name__ == "__main__":
     epilepsy_dir = output_dir / "epilepsy_metric_summary"
     epilepsy_dir.mkdir(exist_ok=True)
     
-    epilepsy_metrics = QCMetric (
+    epilepsy_metric = QCMetric(
         name = "Interictal Metrics",
         value = RulebasedMetric(
-            value=epilepsy_metric_summary,
-            rule=evaluate_metrics(epilepsy_metric_summary, 0.5),
+            value=evaluate_metrics(epilepsy_metric_summary, 0.5),
+            rule="Fail for epilepsy probablity > 0.5",
+        ),
+    status_history=[                                
+        QCStatus(
+            evaluator='Pending status',
+            timestamp=dt.now(), #TODO: Use same timestamp for all metrics?
+            # Requires manual annotation
+            status=Status.PENDING
+        )
+    ]
     )
     epilepsy_metric_evaluation = QCEvaluation(
         modality=Modality.from_abbreviation("pophys"),
         stage = Stage.PROCESSING,
         name = "Epilepsy Probability, %",
-        metrics = [epilepsy_metrics],
+        metrics = [epilepsy_metric],
         allow_failed_metrics = False
+        
     )
     with open(epilepsy_dir / "quality_evaluation.json", "w") as f:
-        json.dump(epilepsy_metric_evaluation.model_dump(), f, indent=4)
+        json.dump(json.loads(epilepsy_metric_evaluation.model_dump_json()), f, indent=4)
 
     quality_evaluation_fp = output_dir.rglob("*quality_evaluation.json")
     quality_evaluations = []
@@ -169,12 +181,15 @@ if __name__ == "__main__":
         with open(qual_eval) as j:
             evaluation = json.load(j)
         quality_evaluations.append(QCEvaluation(**evaluation))
-    
+    quality_evaluation_fp = input_dir.rglob("*quality_evaluation.json")
+    for qual_eval in quality_evaluation_fp:
+        with open(qual_eval) as j:
+            evaluation = json.load(j)
+        quality_evaluations.append(QCEvaluation(**evaluation))
     quality_control = QualityControl(
         evaluations = quality_evaluations
     )
     print("Writing output file")
-    print(quality_control)
     quality_control.write_standard_file()
 
 
