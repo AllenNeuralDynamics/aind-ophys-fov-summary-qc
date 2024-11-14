@@ -27,22 +27,22 @@ import json
 
 
 if __name__ == "__main__":
-    input_dir = Path("../data/")
-    output_dir = Path("../results/")
+    input_dir = Path("data/")
+    output_dir = Path("results/")
     if len(list(input_dir.glob("*"))) == 1:
         input_dir = next(input_dir.glob("*"))
-    plane_dirs = [plane for plane in input_dir.iterdir() if plane.is_dir()]
-
+    motion_dirs = [plane for plane in input_dir.rglob("motion_correction")]
+    movie_qc_dirs = [plane for plane in input_dir.rglob("movie_qc")]
 
     ############### REGISTRATION SUMMARY ###############
     registration_summary = []
     row_labels = []
     average_projection = "average_projection.png"
     maximum_projection = "maximum_projection.png"
-    for plane in plane_dirs:
-        avg_proj_fp = [i for i in plane.glob("*/motion_correction/*") if average_projection in str(i)][0]
-        max_proj_fp = [i for i in plane.glob("*/motion_correction/*") if maximum_projection in str(i)][0]
-        row_labels.append(plane.name)
+    for plane in motion_dirs:
+        avg_proj_fp = [i for i in plane.glob("*") if average_projection in str(i)][0]
+        max_proj_fp = [i for i in plane.glob("*") if maximum_projection in str(i)][0]
+        row_labels.append(plane.parent.name)
         registration_summary.append(avg_proj_fp)
         registration_summary.append(max_proj_fp)
     
@@ -71,9 +71,9 @@ if __name__ == "__main__":
     event_pattern = "registered_epilepsy_probability.png"
     row_labels = []
     epilepsy_summary = []
-    for plane in plane_dirs:
-        event_fp = [i for i in plane.glob("movie_qc/*") if event_pattern in str(i)][0]
-        row_labels.append(plane.name)
+    for plane in movie_qc_dirs:
+        event_fp = [i for i in plane.glob("*") if event_pattern in str(i)][0]
+        row_labels.append(plane.parent.name)
         epilepsy_summary.append(event_fp)
     
     epilepsy_dir = output_dir / "epilepsy_ref_summary"
@@ -100,11 +100,11 @@ if __name__ == "__main__":
 
     event_pattern = "registered_metrics.json"
     epilepsy_metric_summary = {}
-    for plane in plane_dirs:
-        event_fp = [i for i in plane.glob("movie_qc/*") if event_pattern in str(i)][0]
+    for plane in movie_qc_dirs:
+        event_fp = [i for i in plane.glob("*") if event_pattern in str(i)][0]
         with open(event_fp) as f:
             data = json.load(f)
-        epilepsy_metric_summary["epilepsy_probability"] = data["epilepsy_probability"]
+        epilepsy_metric_summary[plane.parent.name] = data["epilepsy_probability"]
     
     epilepsy_dir = output_dir / "epilepsy_metric_summary"
     epilepsy_dir.mkdir(exist_ok=True)
