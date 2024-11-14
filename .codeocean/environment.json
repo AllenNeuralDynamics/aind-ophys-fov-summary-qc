@@ -2,6 +2,27 @@
 	"version": 1,
 	"base_image": "codeocean/jupyterlab:3.0.9-miniconda4.9.2-python3.8-ubuntu20.04",
 	"options": {
+		"registry_host_arg": true,
 		"git_ask_pass": true
+	},
+	"installers": {
+		"pip": {
+			"packages": [
+				{
+					"name": "aind-data-schema",
+					"version": "1.2.0"
+				},
+				{
+					"name": "aind-data-schema-models",
+					"version": "0.6.1"
+				},
+				{
+					"name": "pillow",
+					"version": "10.4.0"
+				}
+			],
+			"options": {},
+			"pre_install_options": {}
+		}
 	}
 }
