@@ -5,7 +5,9 @@ from aind_data_schema.core.quality_control import (
     QCEvaluation,
     QCMetric,
     Stage,
-    QualityControl
+    QualityControl,
+    Status,
+    QCStatus
 )
 from aind_data_schema_models.modalities import Modality
 import json
@@ -28,8 +30,8 @@ import json
 
 
 if __name__ == "__main__":
-    input_dir = Path("../data/")
-    output_dir = Path("../results/")
+    input_dir = Path("data/")
+    output_dir = Path("results/")
     if len(list(input_dir.glob("*"))) == 1:
         input_dir = next(input_dir.glob("*"))
     motion_dirs = [plane for plane in input_dir.rglob("motion_correction")]
@@ -86,7 +88,35 @@ if __name__ == "__main__":
     epilepsy_references = QCMetric (
         name = "Interictal Event Images",
         reference = str(epilepsy_image_fp),
-        value = None
+        value=CheckboxMetric(
+            value="Placeholder CheckboxMetric Value",
+            # Possible options for the metric
+            options=[
+                'Uncorrected motion present',
+                'Low signal-to-noise ratio',
+                'De-warping Vertical Banding Artifact',
+                'Laser/scanner interference',
+                'No cells in FOV',
+                'Other Issue with FOV Quality'
+                ],
+            status=[
+                Status.FAIL,
+                Status.PASS,
+                Status.PASS,
+                Status.PASS,
+                Status.PASS,
+                Status.PENDING #TODO, what should this be?
+                ],
+            status_history=[                                
+                QCStatus(
+                    evaluator='Initial Pending Status',
+                    timestamp=datetime.now(), #TODO: Use same timestamp for all metrics?
+                    # Requires manual annotation
+                    status=Status.PENDING
+                )
+            ]
+        ),
+        status_history = []
     )
     epilepsy_ref_evaluation = QCEvaluation(
         modality=Modality.from_abbreviation("pophys"),
@@ -124,7 +154,7 @@ if __name__ == "__main__":
     with open(epilepsy_dir / "quality_evaluation.json", "w") as f:
         json.dump(epilepsy_metric_evaluation.model_dump(), f, indent=4)
 
-    quality_evaluation_fp = input_dir.rglob("quality_evaluation.json")
+    quality_evaluation_fp = output_dir.rglob("*quality_evaluation.json")
     quality_evaluations = []
     for qual_eval in quality_evaluation_fp:
         with open(qual_eval) as j:
@@ -134,6 +164,8 @@ if __name__ == "__main__":
     quality_control = QualityControl(
         evaluations = quality_evaluations
     )
+    print("Writing output file")
+    print(quality_control)
     quality_control.write_standard_file()
 
 
