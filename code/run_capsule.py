@@ -27,8 +27,8 @@ import json
 
 
 if __name__ == "__main__":
-    input_dir = Path("data/")
-    output_dir = Path("results/")
+    input_dir = Path("../data/")
+    output_dir = Path("../results/")
     if len(list(input_dir.glob("*"))) == 1:
         input_dir = next(input_dir.glob("*"))
     motion_dirs = [plane for plane in input_dir.rglob("motion_correction")]
