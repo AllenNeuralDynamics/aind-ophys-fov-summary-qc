@@ -61,10 +61,12 @@ class Evaluation:
         list
             List of directories containing the data
         """
-        if len(list(self.settings.input_directory.glob("*"))) == 1:
-            return next(self.settings.input_directory.glob("*"))
+        input_dir = list(self.settings.input_directory.glob("*"))
+        if len(input_dir) == 1:
+            input_dir = next(input_dir.glob("*/*"))
+        # add more logic here
         return [
-            plane for plane in self.settings.input_directory.rglob(self.settings.pattern)
+            plane for plane in input_dir.rglob(self.settings.pattern)
         ]
 
     def _make_directory(self, directory: Path) -> Path:

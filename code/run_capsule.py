@@ -126,7 +126,6 @@ def write_event_probability(input_dir: Path, output_dir: Path):
     )
     evaluation = event_probability_evaluation.build_qc_metric(
         value=metric_evaluation, description="If false, all probabilities were below 0.5"
-        )
     )
     event_probability_evaluation.write_evaluation_to_json(evaluation)
 
