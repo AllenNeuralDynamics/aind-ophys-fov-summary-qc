@@ -9,7 +9,7 @@ from aind_data_schema.core.quality_control import (QCEvaluation, QCStatus,
                                                    QualityControl, Stage,
                                                    Status)
 from aind_data_schema_models.modalities import Modality
-from aind_qcportal_schema.metric_value import CheckboxMetric, RulebasedMetric
+from aind_qcportal_schema.metric_value import CheckboxMetric
 from fov_summary.session_evaluation import Evaluation, EvaluationSettings
 
 # Define a configuration for Image name and image format pattern
@@ -125,8 +125,7 @@ def write_event_probability(input_dir: Path, output_dir: Path):
         epilepsy_metric_summary, 0.5
     )
     evaluation = event_probability_evaluation.build_qc_metric(
-        value=RulebasedMetric(
-            value=metric_evaluation, rule="Fail for epilepsy probability > 0.5"
+        value=metric_evaluation, description="If false, all probabilities were below 0.5"
         )
     )
     event_probability_evaluation.write_evaluation_to_json(evaluation)
