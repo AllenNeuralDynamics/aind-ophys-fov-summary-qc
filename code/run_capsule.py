@@ -137,13 +137,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--input_dir",
         type=str,
-        default="../data",
+        default="data/",
         help="Path to the input directory containing the data",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="../data",
+        default="results/",
         help="Path to the output directory to store the results",
     )
     args = parser.parse_args()

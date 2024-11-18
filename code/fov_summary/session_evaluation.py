@@ -61,8 +61,9 @@ class Evaluation:
         list
             List of directories containing the data
         """
-        input_dir = list(self.settings.input_directory.glob("*"))
-        if len(input_dir) == 1:
+        input_dir = self.settings.input_directory
+        import pdb;pdb.set_trace()
+        if len(list(input_dir.glob("*"))) == 1:
             input_dir = next(input_dir.glob("*/*"))
         # add more logic here
         return [
