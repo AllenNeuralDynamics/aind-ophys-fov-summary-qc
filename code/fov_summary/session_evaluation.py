@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from aind_data_schema.core.quality_control import (QCEvaluation, QCMetric,
-                                                   QCStatus, Stage)
+from aind_data_schema.core.quality_control import QCEvaluation, QCMetric, QCStatus, Stage
 from aind_data_schema_models.modalities import Modality
 from pydantic import BaseModel, Field
 import math
 from PIL import Image, ImageDraw, ImageFont
+
 
 class EvaluationSettings(BaseModel):
     """Settings for the evaluation of the registration."""
@@ -65,9 +65,7 @@ class Evaluation:
         input_dir = self.settings.input_directory
         if len(list(input_dir.glob("*"))) == 1:
             return [plane for plane in input_dir.glob("*/*")]
-        return [
-            plane for plane in input_dir.rglob("*")
-        ]
+        return [plane for plane in input_dir.rglob("*")]
 
     def _make_directory(self, directory: Path) -> Path:
         """
@@ -112,7 +110,9 @@ class Evaluation:
 
         for directory in self.directories:
             for pattern in self.settings.pattern:
-                pattern_matches = [i for i in directory.rglob("*") if pattern in str(i) and i.is_file()]
+                pattern_matches = [
+                    i for i in directory.rglob("*") if pattern in str(i) and i.is_file()
+                ]
                 if pattern_matches:
                     matched_files.extend(pattern_matches)
             row_labels.append(directory.parent.name)
