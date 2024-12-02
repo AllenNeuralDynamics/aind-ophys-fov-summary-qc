@@ -8,7 +8,8 @@ from aind_data_schema.core.quality_control import (QCEvaluation, QCMetric,
                                                    QCStatus, Stage)
 from aind_data_schema_models.modalities import Modality
 from pydantic import BaseModel, Field
-
+import math
+from PIL import Image, ImageDraw, ImageFont
 
 class EvaluationSettings(BaseModel):
     """Settings for the evaluation of the registration."""
@@ -62,12 +63,10 @@ class Evaluation:
             List of directories containing the data
         """
         input_dir = self.settings.input_directory
-        import pdb;pdb.set_trace()
         if len(list(input_dir.glob("*"))) == 1:
-            input_dir = next(input_dir.glob("*/*"))
-        # add more logic here
+            return [plane for plane in input_dir.glob("*/*")]
         return [
-            plane for plane in input_dir.rglob(self.settings.pattern)
+            plane for plane in input_dir.rglob("*")
         ]
 
     def _make_directory(self, directory: Path) -> Path:
@@ -112,11 +111,10 @@ class Evaluation:
         matched_files: List[Path] = []
 
         for directory in self.directories:
-            for pattern in self.patterns:
-                pattern_matches = [i for i in directory.glob("*") if pattern in str(i)]
-                if not pattern_matches:
-                    raise ValueError(f"No files found matching the pattern: {pattern}")
-                matched_files.extend(pattern_matches[0])
+            for pattern in self.settings.pattern:
+                pattern_matches = [i for i in directory.rglob("*") if pattern in str(i) and i.is_file()]
+                if pattern_matches:
+                    matched_files.extend(pattern_matches)
             row_labels.append(directory.parent.name)
 
         return row_labels, matched_files
