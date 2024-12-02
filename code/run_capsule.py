@@ -4,6 +4,7 @@ import argparse
 import json
 from datetime import datetime as dt
 from pathlib import Path
+import os
 
 from aind_data_schema.core.quality_control import (QCEvaluation, QCStatus,
                                                    QualityControl, Stage,
@@ -11,6 +12,7 @@ from aind_data_schema.core.quality_control import (QCEvaluation, QCStatus,
 from aind_data_schema_models.modalities import Modality
 from aind_qcportal_schema.metric_value import CheckboxMetric
 from fov_summary.session_evaluation import Evaluation, EvaluationSettings
+from aind_data_schema.core.processing import Processing, DataProcess, PipelineProcess
 
 # Define a configuration for Image name and image format pattern
 # Store the
@@ -44,7 +46,7 @@ def write_fov_summary(input_dir: Path, output_dir: Path):
     reference_image = fov_evaluation.combine_images(
         matched_files, "fov_summary.png", row_labels=row_labels
     )
-    evaluation = fov_evaluation.build_qc_metric(
+    metric = fov_evaluation.build_qc_metric(
         value=CheckboxMetric(
             value="Field of view integrity",
             options=[
@@ -55,8 +57,9 @@ def write_fov_summary(input_dir: Path, output_dir: Path):
             ],
             status=[Status.PASS, Status.FAIL, Status.FAIL, Status.PASS],
         ),
-        reference=[reference_image],
+        reference=str(reference_image),
     )
+    evaluation = fov_evaluation.build_qc_evaluation([metric])
     fov_evaluation.write_evaluation_to_json(evaluation)
 
 
@@ -83,7 +86,7 @@ def write_interictal_summary(input_dir: Path, output_dir: Path):
     reference_image = interictal_evaluation.combine_images(
         matched_files, "interictal_summary.png", row_labels=row_labels
     )
-    evaluation = interictal_evaluation.build_qc_metric(
+    metric = interictal_evaluation.build_qc_metric(
         value=CheckboxMetric(
             value="Field of view integrity",
             options=[
@@ -92,8 +95,9 @@ def write_interictal_summary(input_dir: Path, output_dir: Path):
             ],
             status=[Status.PASS, Status.FAIL],
         ),
-        reference=[reference_image],
+        reference=str(reference_image),
     )
+    evaluation = interictal_evaluation.build_qc_evaluation([metric])
     interictal_evaluation.write_evaluation_to_json(evaluation)
 
 
@@ -117,18 +121,47 @@ def write_event_probability(input_dir: Path, output_dir: Path):
     )
     event_probability_evaluation = Evaluation(event_probability)
     row_labels, matched_files = event_probability_evaluation.collect_pattern_files()
+    epilepsy_metric_summary = {}
     for label, file in zip(row_labels, matched_files):
         with open(file) as f:
             data = json.load(f)
         epilepsy_metric_summary[label] = data["epilepsy_probability"]
-    metric_evaluation = event_probability_evaluation.evaluate_metrics(
+    evaluation_metric = event_probability_evaluation.evaluate_metrics(
         epilepsy_metric_summary, 0.5
     )
-    evaluation = event_probability_evaluation.build_qc_metric(
-        value=metric_evaluation, description="If false, all probabilities were below 0.5"
+    metric = event_probability_evaluation.build_qc_metric(
+        value=evaluation_metric
     )
+    evaluation = event_probability_evaluation.build_qc_evaluation([metric])
     event_probability_evaluation.write_evaluation_to_json(evaluation)
 
+def write_core_metadata(input_dir: Path, output_dir: Path, **kwargs):
+    """Writes final quality control json by aggregating evaluations"""
+    for data_type in kwargs.values():
+        if "evaluation" in data_type.lower():
+            file_path = output_dir.rglob(f"*{data_type}*")
+        elif "data_process" in data_type.lower():
+            file_path = input_dir.rglob(f"*{data_type}*")
+    metadata = []
+    for file in file_path:
+        with open(file) as j:
+            data = json.load(j)
+        if "evaluation" in str(file):
+            metadata.append(QCEvaluation(**data))
+        elif "data_process" in str(file):
+            metadata.append(DataProcess(**data))
+    if "evaluation" in kwargs["data_type"]:
+        core_metadata = QualityControl(evaluations=metadata)
+    elif "data_process" in kwargs["data_type"]:
+        core_metadata = Processing(
+            processing_pipeline=PipelineProcess(
+            processor_full_name="Multplane Ophys Processing Pipeline",
+            pipeline_url=os.getenv("PIPELINE_URL", ""),
+            pipeline_version=os.getenv("PIPELINE_VERSION", ""),
+            data_processes=metadata
+        )
+    )
+    core_metadata.write_standard_file(output_dir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -137,13 +170,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--input_dir",
         type=str,
-        default="data/",
+        default="../data/",
         help="Path to the input directory containing the data",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="results/",
+        default="../results/",
         help="Path to the output directory to store the results",
     )
     args = parser.parse_args()
@@ -155,18 +188,7 @@ if __name__ == "__main__":
     write_interictal_summary(input_dir, output_dir)
     # Build the epilepsy probability metric
     write_event_probability(input_dir, output_dir)
-
-    quality_evaluation_fp = output_dir.rglob("*quality_evaluation.json")
-    quality_evaluations = []
-    for qual_eval in quality_evaluation_fp:
-        with open(qual_eval) as j:
-            evaluation = json.load(j)
-        quality_evaluations.append(QCEvaluation(**evaluation))
-    quality_evaluation_fp = input_dir.rglob("*quality_evaluation.json")
-    for qual_eval in quality_evaluation_fp:
-        with open(qual_eval) as j:
-            evaluation = json.load(j)
-        quality_evaluations.append(QCEvaluation(**evaluation))
-    quality_control = QualityControl(evaluations=quality_evaluations)
-    print("Writing output file")
-    quality_control.write_standard_file(output_dir)
+    # Write quality control json    # Aggregate data procs and build processing json
+    write_core_metadata(input_dir, output_dir, data_type = "evaluation")
+    # Write processing json
+    write_core_metadata(input_dir, output_dir, data_type = "data_process")
