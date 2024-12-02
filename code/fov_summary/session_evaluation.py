@@ -1,14 +1,15 @@
 import json
+import math
 import operator
 import sys
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from aind_data_schema.core.quality_control import QCEvaluation, QCMetric, QCStatus, Stage
+from aind_data_schema.core.quality_control import (QCEvaluation, QCMetric,
+                                                   QCStatus, Stage)
 from aind_data_schema_models.modalities import Modality
-from pydantic import BaseModel, Field
-import math
 from PIL import Image, ImageDraw, ImageFont
+from pydantic import BaseModel, Field
 
 
 class EvaluationSettings(BaseModel):

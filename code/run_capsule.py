@@ -2,17 +2,18 @@
 
 import argparse
 import json
+import os
 from datetime import datetime as dt
 from pathlib import Path
-import os
 
+from aind_data_schema.core.processing import (DataProcess, PipelineProcess,
+                                              Processing)
 from aind_data_schema.core.quality_control import (QCEvaluation, QCStatus,
                                                    QualityControl, Stage,
                                                    Status)
 from aind_data_schema_models.modalities import Modality
 from aind_qcportal_schema.metric_value import CheckboxMetric
 from fov_summary.session_evaluation import Evaluation, EvaluationSettings
-from aind_data_schema.core.processing import Processing, DataProcess, PipelineProcess
 
 # Define a configuration for Image name and image format pattern
 # Store the
@@ -129,11 +130,10 @@ def write_event_probability(input_dir: Path, output_dir: Path):
     evaluation_metric = event_probability_evaluation.evaluate_metrics(
         epilepsy_metric_summary, 0.5
     )
-    metric = event_probability_evaluation.build_qc_metric(
-        value=evaluation_metric
-    )
+    metric = event_probability_evaluation.build_qc_metric(value=evaluation_metric)
     evaluation = event_probability_evaluation.build_qc_evaluation([metric])
     event_probability_evaluation.write_evaluation_to_json(evaluation)
+
 
 def write_core_metadata(input_dir: Path, output_dir: Path, **kwargs):
     """Writes final quality control json by aggregating evaluations"""
@@ -155,13 +155,14 @@ def write_core_metadata(input_dir: Path, output_dir: Path, **kwargs):
     elif "data_process" in kwargs["data_type"]:
         core_metadata = Processing(
             processing_pipeline=PipelineProcess(
-            processor_full_name="Multplane Ophys Processing Pipeline",
-            pipeline_url=os.getenv("PIPELINE_URL", ""),
-            pipeline_version=os.getenv("PIPELINE_VERSION", ""),
-            data_processes=metadata
+                processor_full_name="Multplane Ophys Processing Pipeline",
+                pipeline_url=os.getenv("PIPELINE_URL", ""),
+                pipeline_version=os.getenv("PIPELINE_VERSION", ""),
+                data_processes=metadata,
+            )
         )
-    )
     core_metadata.write_standard_file(output_dir)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -189,6 +190,6 @@ if __name__ == "__main__":
     # Build the epilepsy probability metric
     write_event_probability(input_dir, output_dir)
     # Write quality control json    # Aggregate data procs and build processing json
-    write_core_metadata(input_dir, output_dir, data_type = "evaluation")
+    write_core_metadata(input_dir, output_dir, data_type="evaluation")
     # Write processing json
-    write_core_metadata(input_dir, output_dir, data_type = "data_process")
+    write_core_metadata(input_dir, output_dir, data_type="data_process")
