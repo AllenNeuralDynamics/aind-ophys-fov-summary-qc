@@ -1,4 +1,4 @@
-# hash:sha256:0f45c0cbc88dc3a643dfc29f9e725c7e0b0ef98420e12264861c89ba9ef5e4ba
+# hash:sha256:237a603805bbf1fecd5c84e8443c9fa1b7da9bec62c0a016731fd78113ec8904
 ARG REGISTRY_HOST
 FROM $REGISTRY_HOST/codeocean/mambaforge3:23.1.0-4-python3.10.12-ubuntu22.04
 
@@ -14,10 +14,3 @@ RUN pip install -U --no-cache-dir \
     aind-qcportal-schema==0.1.1 \
     pillow==10.4.0 \
     pydantic==2.8.1
-
-ADD "https://github.com/coder/code-server/releases/download/v4.9.0/code-server-4.9.0-linux-amd64.tar.gz" /.code-server/code-server.tar.gz
-	
-RUN cd /.code-server \
-	&& tar -xvf code-server.tar.gz \
-	&& rm code-server.tar.gz \
-	&& ln -s /.code-server/code-server-4.9.0-linux-amd64/bin/code-server  /usr/bin/code-server
