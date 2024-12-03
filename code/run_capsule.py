@@ -183,7 +183,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
-    # Buile the fov summary metric
+    # Build the fov summary metric
     write_fov_summary(input_dir, output_dir)
     # Build the interictal summary images
     write_interictal_summary(input_dir, output_dir)
