@@ -8,11 +8,11 @@ from pathlib import Path
 
 from aind_data_schema.core.processing import (DataProcess, PipelineProcess,
                                               Processing)
-from aind_data_schema.core.quality_control import (QCEvaluation, QCStatus,
+from aind_data_schema.core.quality_control import (QCMetric, QCEvaluation, QCStatus,
                                                    QualityControl, Stage,
                                                    Status)
 from aind_data_schema_models.modalities import Modality
-from aind_qcportal_schema.metric_value import CheckboxMetric
+from aind_qcportal_schema.metric_value import CheckboxMetric, DropdownMetric
 from fov_summary.session_evaluation import Evaluation, EvaluationSettings
 
 # Define a configuration for Image name and image format pattern
@@ -164,6 +164,61 @@ def write_core_metadata(input_dir: Path, output_dir: Path, **kwargs):
     core_metadata.write_standard_file(output_dir)
 
 
+def load_qcmetrics_from_json(input_dir, pattern):
+    """
+    Load all qc metrics from json files in the input directory
+
+    Parameters
+    ----------
+    input_dir : Path
+        Path to the input directory
+    pattern : str
+        Pattern to match the json files
+
+    Returns
+    -------
+    list
+        List of QC Metric objects
+    """
+
+    qc_metrics = []
+    for file in input_dir.rglob(f"*{pattern}*.json"):
+        # load json file and call QCMetric.model_validate_json to reate the object
+       
+       # open json file
+        with open(file) as f:
+            data = json.load(f)
+            # create QCMetric object
+            # check data's type field to determine which class to use
+            if 'type' not in data:
+                # use base QCMetric class
+                qc_metrics.append(QCMetric.model_validate_json(data))
+            if data["type"] == "checkbox":
+                qc_metrics.append(CheckboxMetric.model_validate_json(data))
+            elif data["type"] == "dropdown":
+                qc_metrics.append(DropdownMetric.model_validate_json(data))
+
+    return qc_metrics
+
+
+
+
+def generate_full_quality_control(input_dir, output_dir):
+    quality_control = QualityControl(
+        evaluations=[
+            QCEvaluation(
+                modality=Modality.from_abbreviation("pophys"),
+                stage=Stage.PROCESSING,
+                name="Motion Correction Registration Summary",
+                description="Registration summaries for all planes",
+                allow_failed_metrics=True, # this QCEvaluation should not fail the entire QualityControl object
+                metrics=load_qcmetrics_from_json(input_dir, pattern="registration_summary")
+            )
+
+        ],    
+    )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate a quality control report for a pophys dataset"
@@ -184,12 +239,13 @@ if __name__ == "__main__":
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
     # Build the fov summary metric
+    generate_full_quality_control(input_dir, output_dir)
     write_fov_summary(input_dir, output_dir)
     # Build the interictal summary images
-    write_interictal_summary(input_dir, output_dir)
+    #write_interictal_summary(input_dir, output_dir)
     # Build the epilepsy probability metric
-    write_event_probability(input_dir, output_dir)
+    #write_event_probability(input_dir, output_dir)
     # Write quality control json    # Aggregate data procs and build processing json
-    write_core_metadata(input_dir, output_dir, data_type="evaluation")
+    #write_core_metadata(input_dir, output_dir, data_type="evaluation")
     # Write processing json
-    write_core_metadata(input_dir, output_dir, data_type="data_process")
+    #write_core_metadata(input_dir, output_dir, data_type="data_process")
