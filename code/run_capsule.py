@@ -193,7 +193,7 @@ def load_qcmetrics_from_json(input_dir, pattern):
             if 'type' not in data:
                 # use base QCMetric class
                 qc_metrics.append(QCMetric.model_validate_json(data))
-            if data["type"] == "checkbox":
+            elif data["type"] == "checkbox":
                 qc_metrics.append(CheckboxMetric.model_validate_json(data))
             elif data["type"] == "dropdown":
                 qc_metrics.append(DropdownMetric.model_validate_json(data))
