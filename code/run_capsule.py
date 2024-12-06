@@ -204,6 +204,7 @@ def load_qcmetrics_from_json(input_dir, pattern):
 
 
 def generate_full_quality_control(input_dir, output_dir):
+    print("generate_full_quality_control")
     quality_control = QualityControl(
         evaluations=[
             QCEvaluation(
@@ -217,7 +218,7 @@ def generate_full_quality_control(input_dir, output_dir):
 
         ],    
     )
-
+    print("writing file")
     quality_control.write_standard_file()
 
 
@@ -237,6 +238,8 @@ if __name__ == "__main__":
         default="../results/",
         help="Path to the output directory to store the results",
     )
+
+    print("running")
     args = parser.parse_args()
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
