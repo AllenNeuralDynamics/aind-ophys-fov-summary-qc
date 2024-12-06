@@ -219,7 +219,7 @@ def generate_full_quality_control(input_dir, output_dir):
         ],    
     )
     print("writing file")
-    quality_control.write_standard_file()
+    quality_control.write_standard_file(output_directory='/results/')
 
 
 if __name__ == "__main__":
