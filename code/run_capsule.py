@@ -218,6 +218,8 @@ def generate_full_quality_control(input_dir, output_dir):
         ],    
     )
 
+    quality_control.write_standard_file()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
