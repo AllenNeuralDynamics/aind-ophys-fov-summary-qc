@@ -182,7 +182,7 @@ def load_qcmetrics_from_json(input_dir, pattern):
     """
 
     qc_metrics = []
-    for file in input_dir.rglob(f"*{pattern}_metrics*.json"):
+    for file in input_dir.rglob(f"*{pattern}*_metric.json"):
         # load json file and call QCMetric.model_validate_json to reate the object
        
        # open json file
