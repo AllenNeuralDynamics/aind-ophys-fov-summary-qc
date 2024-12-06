@@ -182,7 +182,7 @@ def load_qcmetrics_from_json(input_dir, pattern):
     """
 
     qc_metrics = []
-    for file in input_dir.rglob(f"*{pattern}*.json"):
+    for file in input_dir.rglob(f"*{pattern}_metrics*.json"):
         # load json file and call QCMetric.model_validate_json to reate the object
        
        # open json file
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     output_dir = Path(args.output_dir)
     # Build the fov summary metric
     generate_full_quality_control(input_dir, output_dir)
-    write_fov_summary(input_dir, output_dir)
+    # write_fov_summary(input_dir, output_dir)
     # Build the interictal summary images
     #write_interictal_summary(input_dir, output_dir)
     # Build the epilepsy probability metric
