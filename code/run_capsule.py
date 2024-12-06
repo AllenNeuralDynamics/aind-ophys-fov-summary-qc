@@ -213,8 +213,15 @@ def generate_full_quality_control(input_dir, output_dir):
                 description="Registration summaries for all planes",
                 allow_failed_metrics=True, # this QCEvaluation should not fail the entire QualityControl object
                 metrics=load_qcmetrics_from_json(input_dir, pattern="registration_summary")
+            ),
+            QCEvaluation(
+                modality=Modality.from_abbreviation("pophys"),
+                stage=Stage.PROCESSING,
+                name='Motion Correction FOV Quality',
+                description='Field of view quality control',
+                allow_failed_metrics=True, # this QCEvaluation should not fail the entire QualityControl object
+                metrics=load_qcmetrics_from_json(input_dir, pattern="fov_quality")
             )
-
         ],    
     )
 
