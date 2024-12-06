@@ -182,7 +182,7 @@ def load_qcmetrics_from_json(input_dir, pattern):
     """
 
     qc_metrics = []
-    for file in input_dir.rglob(f"*{pattern}_metrics*.json"):
+    for file in input_dir.rglob(f"*{pattern}*_metric.json"):
         # load json file and call QCMetric.model_validate_json to reate the object
        
        # open json file
@@ -192,11 +192,11 @@ def load_qcmetrics_from_json(input_dir, pattern):
             # check data's type field to determine which class to use
             if 'type' not in data:
                 # use base QCMetric class
-                qc_metrics.append(QCMetric.model_validate_json(data))
+                qc_metrics.append(QCMetric.model_validate(data))
             elif data["type"] == "checkbox":
-                qc_metrics.append(CheckboxMetric.model_validate_json(data))
+                qc_metrics.append(CheckboxMetric.model_validate(data))
             elif data["type"] == "dropdown":
-                qc_metrics.append(DropdownMetric.model_validate_json(data))
+                qc_metrics.append(DropdownMetric.model_validate(data))
 
     return qc_metrics
 
@@ -204,6 +204,7 @@ def load_qcmetrics_from_json(input_dir, pattern):
 
 
 def generate_full_quality_control(input_dir, output_dir):
+    print("generate_full_quality_control")
     quality_control = QualityControl(
         evaluations=[
             QCEvaluation(
@@ -224,6 +225,8 @@ def generate_full_quality_control(input_dir, output_dir):
             )
         ],    
     )
+    print("writing file")
+    quality_control.write_standard_file(output_directory='/results/')
 
 
 if __name__ == "__main__":
@@ -242,6 +245,8 @@ if __name__ == "__main__":
         default="../results/",
         help="Path to the output directory to store the results",
     )
+
+    print("running")
     args = parser.parse_args()
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
